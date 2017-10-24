@@ -1,0 +1,85 @@
+/*
+ * dedup.h
+ *
+ *  Created on: 2012-7-12
+ *      Author: BadBoy
+ */
+
+#ifndef DEDUP_H_
+#define DEDUP_H_
+
+extern uint64_t dup_len;
+extern uint64_t total_len;
+extern uint64_t unique_len;
+extern uint64_t compressed_len;
+extern uint64_t comp_unique_len;
+
+
+
+struct dedup_manager
+{
+	//the file to store all the metadata produced by the de-dudplication program
+	struct storage_manager manager;
+
+	//the file to store all the chunkdata produced by the de-dudplication program
+	struct storage_manager chunk_manager;
+
+	//the meta-data segment in memory, when it's full, it will be written into disk
+	struct mtdata_seg mt_seg;
+
+	//the data segment in memory, when it's full, it will be written into disk
+	struct data_seg dt_seg;
+
+	//the data structure to handle the current file to be de-dupliated
+	struct file_seg f_seg;
+
+	//the cache for finger-print lookup
+	struct cache cache;
+
+	//the disk hash for finger-print lookup
+	struct disk_hash disk_hash;
+
+	//the chunk buffer to hold the chunk data
+	char chunk_buf[MAX_CHUNK_LEN];
+
+#ifdef COMPRESS
+	char compress_buf[MAX_COMPRESS_LEN];
+#endif
+
+	//the bloom-filter
+	char bf[BF_LEN];
+
+	//the struct to store metadata read from disk to cache
+	struct metadata mtdata[TO_CACHE_LEN];
+
+	//new bloom filter from Zhichao
+	struct _bloom *bloom;
+	struct memstore *memstore;
+};
+
+
+
+int dedup_init(struct dedup_manager * dedup, char * data_file_name, char * chunk_file_name);
+
+int load_cache(struct mtdata_seg * seg, struct metadata * mtdata, uint64_t offset, struct cache * cache);
+
+int generate_fingerprint(char * buf, uint32_t len, struct dedup_manager * dedup, struct metadata *mtdata);
+
+int index_dedup(char * buf, struct metadata *mtdata, struct dedup_manager * dedup, FILE *fp);
+
+int hash_index_dedup(char * buf, struct metadata *mtdata, struct dedup_manager * dedup, FILE *fp);
+
+int memstore_index_dedup(char * buf, struct metadata *mtdata, struct dedup_manager * dedup, FILE *fp);
+
+int newly_dedup(char * buf, int len, struct dedup_manager * dedup, FILE *fp);
+
+
+int destroy(struct dedup_manager * dedup);
+
+struct dedup_manager *deduplication_init(void);
+
+void deduplication_destroy(struct dedup_manager *dedup);
+
+
+
+#endif /* DEDUP_H_ */

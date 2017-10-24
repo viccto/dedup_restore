@@ -1,0 +1,113 @@
+/*
+ * memstore.h
+ *
+ *  Created on: 04/18/2017
+ *      Author: Zhichao Cao
+ */
+
+#ifndef MEMSTORE_H_
+#define MEMSTORE_H_
+
+/*the node to store one chunk information*/
+struct mem_node
+{
+	uint32_t bkdrhash;
+	uint32_t seg_offset;
+	uint32_t dirty;
+	uint32_t seg_hash_id;
+	uint32_t bf_id;
+	uint32_t hit_count;
+	struct mem_node *next;
+	struct mem_node *lru_next;
+	struct mem_node *lru_pre;
+	struct disk_hash_node hash_node;
+};
+
+/*the basic I/O unite from storage to memory and also the management unite*/
+struct mem_seg
+{
+	uint32_t seg_hash_id;
+	uint32_t bf_id;
+	uint32_t dirty;
+	uint32_t current_ptr;
+	int cache_level;
+	struct _bloom *bloom;
+	struct mem_node **node_map;
+	struct mem_node *node_array;
+	struct mem_seg *hash_next;
+	struct mem_seg *hash_pre;
+	struct mem_seg *lru_next;
+	struct mem_seg *lru_pre;
+};
+
+/*the whole indexing table structure*/
+struct memstore
+{
+	uint32_t bf_count;
+	uint32_t seg_cache_num;
+	uint32_t bf_cache_num;
+	uint32_t seg_total_num;
+	uint32_t node_num;
+	uint64_t node_cache_hit_count;
+	struct mem_seg seg_map[MEMSTORE_SEG_BUCK]; //level 1 cache, for the new inserted node
+	struct mem_seg seg_lru;  //level 2 cache, BF+hash table
+	struct mem_seg bf_lru;   //level 3 cache only BF
+	struct mem_seg null_list; //all null seg are listed here
+	struct mem_node node_cache[MEMSTORE_NODE_CACHE_BUCK]; // the level 0 cache, for the hot nodes
+	struct mem_node node_lru;
+};
+
+
+uint32_t bkdr_hash(char *str);
+
+struct mem_seg *mem_seg_create(void);
+
+int mem_seg_init(struct mem_seg *seg, struct memstore *store, uint32_t seg_hash_id);
+
+int mem_seg_new(struct mem_seg *seg, struct memstore *store);
+
+void mem_seg_destroy(struct mem_seg *seg);
+
+struct memstore *memstore_init(void);
+
+void mem_seg_remove(struct mem_seg *seg);
+
+void memstore_destroy(struct memstore *store);
+
+int mem_seg_write(struct mem_seg *seg);
+
+int mem_node_cache_add(struct memstore *store, struct mem_seg *seg);
+
+int memstore_add(struct memstore *store, struct disk_hash_node *disk_hash_node);
+
+int mem_seg_lru_move_after(struct mem_seg *seg, struct mem_seg *lru);
+
+struct mem_node *mem_node_cache_check(struct memstore *store, uint32_t bkdrhash, char *fingerprint);
+
+int memstore_read_seg(struct mem_seg *seg);
+
+struct mem_node *memstore_seg_check(struct mem_seg *seg, char *fingerprint, uint32_t node_buck);
+
+struct mem_node *memstore_check(struct memstore *store, char *fingerprint);
+
+
+
+
+
+
+
+	
+	
+
+
+	
+
+
+
+
+
+
+
+
+#endif
+

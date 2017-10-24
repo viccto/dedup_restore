@@ -1,0 +1,23 @@
+deduplicate the file
+0 0 -nan
+974 9026 1.107910
+3755 16245 1.231148
+4723 25277 1.186850
+6902 33098 1.208532
+7771 42229 1.184020
+10116 49884 1.202790
+19325 50675 1.381352
+29325 50675 1.578688
+39325 50675 1.776024
+container files written to disk: 50
+duplicated: 49325
+unique: 50675
+BF false positive: 0
+total container read: 0
+restore cache miss: 0
+restore cache hit: 0
+restored file total size: 0
+the restore time: 0.000001, the I/O time: 0.000000, the computing time: 0.000001
+the restore throughput: 0.000000 MB/S
+Hello, world!
+0 0 0 0 0.000001 0.000000 0.000001 0.000000 
